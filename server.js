@@ -34,6 +34,9 @@ mongoose.connect('mongodb://localhost/NYT', {
 });
 
 //======Routes====================
+app.get('/', function(req, res) {
+  res.render('index');
+});
 app.get('/scrape', function(req, res) {
   axios.get('http://www.nytimes.com').then(function(response){
 
@@ -58,6 +61,7 @@ app.get('/scrape', function(req, res) {
         .create(result)
         .then(function(dbArticle) {
           res.send('Scrape Complete');
+          res.redirect('/');
         })
         .catch(function(err) {
           res.json(err);
@@ -118,7 +122,6 @@ app.post("/articles/:id", function(req, res) {
       res.json(err);
     });
 });
-
 // Start the server
 app.listen(PORT, function() {
   console.log("App running on port " + PORT + "!");

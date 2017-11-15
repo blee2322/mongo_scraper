@@ -29,7 +29,8 @@
               <p>{{this.summary}}</p>
               <a href={{this.link}} target="_blank">{{this.link}}</a>
               <br><br>
-              <button type='button' class='btn btn-success save' data-id={{this._id}}>Save Article</button>
+              <button type='button' class='btn btn-success addNote' data-toggle='modal' data-target='#noteModal{{this._id}}' data-id={{this._id}}>Add Note</button>
+              <button type='button' class='btn btn-danger delete' data-id={{this._id}}>Delete</button>
             </div>
           </div>
           </div>
@@ -44,3 +45,7 @@
     </div>
   </div>
 </div>
+
+{{#each article}}
+  {{>note-modal}}
+{{/each}}
