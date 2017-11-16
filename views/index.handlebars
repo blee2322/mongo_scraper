@@ -1,7 +1,7 @@
 <nav class="navbar navbar-default navbar-static-top">
   <div class="container">
     <div class="navbar-header">
-      <button type="button" class="btn btn-default navbar-btn">Scrape New Articles</button>
+      <button type="button" class="btn btn-default navbar-btn" id="scrape">Scrape New Articles</button>
       <div class="navbar-brand">
         <p>Mongo Scraper</p.
       </div>
@@ -17,22 +17,14 @@
       <h1> NYT Mongo Scaper</h1>
     </div>
   </div>
+</div>
+
+<div class='container'>
   <div class='row'>
     <div class='col-md-12'>
       {{#if article}}
         {{#each article}}
-          <div class='panel panel-default'>
-            <div class='panel-heading'>
-              <h3>{{this.title}}</h3>
-            </div>
-            <div class='panel-body'>
-              <p>{{this.summary}}</p>
-              <a href={{this.link}} target="_blank">{{this.link}}</a>
-              <br><br>
-              <button type='button' class='btn btn-success save' data-id={{this._id}}>Save Article</button>
-            </div>
-          </div>
-          </div>
+          {{>article-panel}}
         {{/each}}
       {{else}}
       <div class ='panel panel-default'>

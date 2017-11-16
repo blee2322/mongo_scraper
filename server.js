@@ -34,14 +34,33 @@ mongoose.connect('mongodb://localhost/NYT', {
 });
 
 //======Routes====================
+//Render Handlebars
 app.get('/', function(req, res) {
-  res.render('index');
+  db.Article.find({'saved': false}, function(error, data) {
+    var hbsObject = {
+      article: data
+    };
+    res.render('index', hbsObject);
+  })
 });
+
+app.get('/saved', function(req, res) {
+  db.Article.find({'saved': true}, function(error, data) {
+    var hbsObject = {
+      article: data
+    };
+    res.render('saved', hbsObject);
+  })
+});
+
 app.get('/scrape', function(req, res) {
+  console.log('/scrape hit')
   axios.get('http://www.nytimes.com').then(function(response){
 
     var $ = cheerio.load(response.data);
-
+    var tracker = 0;  
+    var total = $('article.theme-summary').length;
+    console.log(total)
     $('article.theme-summary').each(function(i, element) {
 
       var result = {};
@@ -56,16 +75,23 @@ app.get('/scrape', function(req, res) {
       result.summary = $(this)
         .children('.summary')
         .text();
+        if (result.title!==''){
 
-      db.Article
-        .create(result)
-        .then(function(dbArticle) {
-          res.send('Scrape Complete');
-          res.redirect('/');
-        })
-        .catch(function(err) {
-          res.json(err);
-        });
+          db.Article
+            .create(result)
+            .then(function(dbArticle) {
+              tracker ++;  
+              if (tracker === total){
+                res.send("done scraping")
+              }
+            })
+            .catch(function(err) {
+              res.json(err);
+            });
+          console.log(result)
+        }
+
+        
     });
   });
 });
@@ -102,15 +128,40 @@ app.get("/articles/:id", function(req, res) {
     });
 });
 
+//Route for saving an article
+app.post('/articles/save/:id', function(req, res){
+
+  db.Article
+    .findOneAndUpdate({'_id': req.params.id}, {'saved': true})
+    .then(function(dbArticle) {
+      res.json(dbArticle);
+    })
+    .catch(function(err) {
+
+      res.json(err);
+    })
+});
+
+//Route for deleting article
+app.post('/articles/delete/:id', function(req, res) {
+  db.Article
+    .findOneAndUpdate({'_id': req.params.id}, {'saved': false, 'notes': []})
+    .then(function(dbArticle) {
+      res.json(dbArticle);
+    })
+    .catch(function(err) {
+
+      res.json(err);
+    })
+
+})
+
 // Route for saving/updating an Article's associated Note
-app.post("/articles/:id", function(req, res) {
+app.post("/notes/save/:id", function(req, res) {
   // Create a new note and pass the req.body to the entry
   db.Note
     .create(req.body)
     .then(function(dbNote) {
-      // If a Note was created successfully, find one Article with an `_id` equal to `req.params.id`. Update the Article to be associated with the new Note
-      // { new: true } tells the query that we want it to return the updated User -- it returns the original by default
-      // Since our mongoose query returns a promise, we can chain another `.then` which receives the result of the query
       return db.Article.findOneAndUpdate({ _id: req.params.id }, { note: dbNote._id }, { new: true });
     })
     .then(function(dbArticle) {
@@ -122,6 +173,18 @@ app.post("/articles/:id", function(req, res) {
       res.json(err);
     });
 });
+// 
+app.delete('/notes/delete/:note_id/:article_id', function(req, res) {
+  db.Note
+    .findOneAndRemove({'_id': req.params.note})
+    .then(function(dbNote) {
+      res.json(dbNote);
+    })
+    .catch(function(err) {
+
+      res.json(err);
+    })
+})
 // Start the server
 app.listen(PORT, function() {
   console.log("App running on port " + PORT + "!");
